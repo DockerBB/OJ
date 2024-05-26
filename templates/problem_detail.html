@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <title>{{ problem.title }}</title>
+</head>
+<body>
+{% include 'header.html' %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-4">
+            <div class="row fs-2 fw-bold mb-3">{{ problem.title }}</div>
+            <div class="row fs-5 lh-lg">{{ problem.content }}</div>
+            {% for key, example in problem_example.items() %}
+                <div class="mb-3">
+                    <div class="row fw-bold">示例{{ key }}</div>
+                    <div class="row fw-bold">
+                        {{ example[0] }}
+                    </div>
+                    <div class="row fw-bold">
+                        {{ example[1] }}
+                    </div>
+                    <div class="row fw-bold">
+                        {{ example[2] }}
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="row fw-bold mb-3">提示</div>
+            {% for key, item in tips.items() %}
+                <div class="mb-3">
+                    <div class="row fw-bold ">{{ item }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-6">
+            <div class="mb-3">
+                <div class="dropdown mb-3">
+                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        编程语言
+                    </a>
+
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">C++</a></li>
+                        <li><a class="dropdown-item" href="#">Python</a></li>
+                        <li><a class="dropdown-item" href="#">Java</a></li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <textarea style="height: 500px" class="form-control" id="exampleFormControlTextarea1"
+                              rows="3"></textarea>
+                </div>
+                <div class="mb-3 row">
+                    <div class="col-2">
+                        <a class="btn btn-primary" href="/submit_run/{{ problem.pid }}" role="button">运行</a>
+                    </div>
+                    <div class="col">
+                        <a class="btn btn-success" href="/submit_problem/{{ problem.pid }}" role="button">提交</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-/mhDoLbDldZc3qpsJHpLogda//BVZbgYuw6kof4u2FrCedxOtgRZDTHgHUhOCVim"
+        crossorigin="anonymous"></script>
+</body>
+</html>

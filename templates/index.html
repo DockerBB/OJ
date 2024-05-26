@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+
+</head>
+<body>
+{% include 'header.html' %}
+<div class="container">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">题目</th>
+            <th scope="col">通过率</th>
+            <th scope="col">难度</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in results %}
+            <tr>
+                <th scope="row">{{ item.pid }}</th>
+                <td class="text-info fw-bold">{{ item.title }}</td>
+                <td>{{ item.pass_rate }}</td>
+                <td {% if item.difficulty == '简单' %}class="text-success fw-bold"
+                    {% elif item.difficulty == '中等' %}class="text-warning fw-bold"
+                    {% elif item.difficulty == '困难' %}class="text-danger fw-bold"
+                    {% else %}class=""{% endif %}>{{ item.difficulty }}</td>
+                <td><a class="btn btn-primary" href="/problem_detail/{{ item.pid }}" role="button">做题</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-/mhDoLbDldZc3qpsJHpLogda//BVZbgYuw6kof4u2FrCedxOtgRZDTHgHUhOCVim"
+        crossorigin="anonymous"></script>
+</body>
+</html>
