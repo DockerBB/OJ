@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import json
+import requests
 
 app = Flask(__name__)
 
@@ -58,5 +59,36 @@ def problem_detail(pid):
     problem_example = json.loads(result.example)
     tips = json.loads(result.tips)
     return render_template('problem_detail.html', problem=result, problem_example=problem_example, tips=tips)
+
+
+@app.route('/submit_problem/<int:pid>', methods=['POST'])
+def submit_problem(pid):
+    # 获取客户端提交的表单数据
+    form_data = request.form.to_dict()
+    # print(form_data)
+    response = requests.post(f'http://127.0.0.1:9900/problems/{pid}/judge', data=json.dumps(form_data),
+                             headers={'Content-Type': 'application/json'})
+
+    if response.status_code == 200:
+        # 返回另一个 API 的响应
+        print(response.json())
+        return jsonify(response.json())
+    else:
+        # 返回错误信息
+        return jsonify({'error': 'Failed to send data to other API'}), 500
+
+@app.route('/problem_manage', methods=['GET', 'POST'])
+def problem_manage():
+    res = db.session.execute(text('select * from problem'))
+    result = res.fetchall()
+    print(result)
+    if request.method == 'POST':
+        pass
+    return render_template('problem_manage.html', results=result)
+
+@app.route('/testcase_manage', methods=['GET', 'POST'])
+def testcase_manage():
+    return "用例管理页面"
+
 if __name__ == '__main__':
-    app.run()
+    app.run(port=8899)

@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <title>{{ problem.title }}</title>
+    <link rel="stylesheet" href="../static/bootstrap.css">
+    <script src="../static/jquery.js"></script>
+    <script src="../static/bootstrap.js"></script>
 </head>
 <body>
 {% include 'header.html' %}
@@ -36,21 +37,18 @@
             {% endfor %}
         </div>
         <div class="col-6">
-            <div class="mb-3">
-                <div class="dropdown mb-3">
-                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                       aria-expanded="false">
-                        编程语言
-                    </a>
-
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">C++</a></li>
-                        <li><a class="dropdown-item" href="#">Python</a></li>
-                        <li><a class="dropdown-item" href="#">Java</a></li>
-                    </ul>
-                </div>
+            <div id="program-div" class="mb-3">
                 <div class="mb-3">
-                    <textarea style="height: 500px" class="form-control" id="exampleFormControlTextarea1"
+                    <select class="form-select" aria-label="language" id="language" style="width: 150px">
+                        <option selected>请选择语言</option>
+                        <option value="c++">c++</option>
+                        <option value="python">python</option>
+                        <option value="java">java</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <textarea style="height: 500px" class="form-control" id="code-textarea"
                               rows="3"></textarea>
                 </div>
                 <div class="mb-3 row">
@@ -58,7 +56,8 @@
                         <a class="btn btn-primary" href="/submit_run/{{ problem.pid }}" role="button">运行</a>
                     </div>
                     <div class="col">
-                        <a class="btn btn-success" href="/submit_problem/{{ problem.pid }}" role="button">提交</a>
+                        <a class="btn btn-success" role="button"
+                           id="submit-btn">提交</a>
                     </div>
                 </div>
             </div>
@@ -66,8 +65,57 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-/mhDoLbDldZc3qpsJHpLogda//BVZbgYuw6kof4u2FrCedxOtgRZDTHgHUhOCVim"
-        crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function () {
+        // jQuery 代码放在这里
+        $('#submit-btn').click(function () {
+            let responseDiv = $('#response_div');
+            if (responseDiv.length > 0) {
+                // 如果已有,先移除
+                responseDiv.remove();
+            }
+            // 在点击时添加 Loading 提示 div
+            $('#program-div').append('<div id="loading-div" class="d-flex align-items-center">\
+            <strong>Running...</strong>\
+            <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>\
+        </div>');
+            let selectedLanguage = $('#language').val();
+
+            let codeInput = $('#code-textarea').val();
+
+            let formData = new FormData();
+            formData.append('language', selectedLanguage);
+            formData.append('code', codeInput);
+            $.ajax({
+                type: 'POST',
+                url: '/submit_problem/{{ problem.pid }}',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    // 在成功响应后移除 Loading 提示 div
+                    $('#loading-div').remove();
+                    // 先检查是否已有 id 为 "response_div" 的 div
+                    let responseDiv = $('#response_div');
+                    if (responseDiv.length > 0) {
+                        // 如果已有,先移除
+                        responseDiv.remove();
+                    }
+                    if (response.status == 'error') {
+                        $('#program-div').append('<div id= "response_div" class="alert alert-danger" role="alert">' + response.message + '</div>');
+                    } else if (response.status == 'pass') {
+                        $('#program-div').append('<div id= "response_div" class="alert alert-success" role="alert">' + response.message + '</div>');
+                    }
+
+                },
+                error: function (xhr, status, error) {
+                    // 在失败响应后移除 Loading 提示 div
+                    $('#loading-div').remove();
+                    alert('Error submitting code: ' + error);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

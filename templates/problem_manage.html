@@ -31,12 +31,11 @@
                     {% elif item.difficulty == '中等' %}class="text-warning fw-bold"
                     {% elif item.difficulty == '困难' %}class="text-danger fw-bold"
                     {% else %}class=""{% endif %}>{{ item.difficulty }}</td>
-                <td><a class="btn btn-primary" href="/problem_detail/{{ item.pid }}" role="button">做题</a></td>
+                <td><a class="btn btn-primary" href="/problem_detail/{{ item.pid }}" role="button">编辑</a></td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
-
 </body>
 </html>
