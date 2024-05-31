@@ -66,7 +66,10 @@ def problem_detail(pid):
     res = db.session.execute(text('select * from problem where pid="{}"'.format(pid)))
     result = res.fetchone()
     print(result.example)
-    problem_example = json.loads(result.example)
+    if result.example:
+        problem_example = json.loads(result.example)
+    else:
+        problem_example = None
     tips = json.loads(result.tips)
     return render_template('problem_detail.html', problem=result, problem_example=problem_example, tips=tips)
 
@@ -103,7 +106,7 @@ def problem_manage():
 
 @app.route('/testcase_manage', methods=['GET', 'POST'])
 def testcase_manage():
-    return "用例管理页面"
+    return render_template('testcase_manage.html')
 
 
 @app.route('/update_problem/<int:pid>', methods=['POST'])
