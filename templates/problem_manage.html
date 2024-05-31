@@ -6,11 +6,37 @@
     <link rel="stylesheet" href="../static/bootstrap.css">
     <script src="../static/jquery.js"></script>
     <script src="../static/bootstrap.js"></script>
-
+    <style>
+        #delete-btn {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
 {% include 'header.html' %}
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <!-- Position it: -->
+    <!-- - `.toast-container` for spacing between toasts -->
+    <!-- - `top-0` & `end-0` to position the toasts in the upper right corner -->
+    <!-- - `.p-3` to prevent the toasts from sticking to the edge of the container  -->
+    <div class="toast-container top-0 end-0 p-3">
+
+        <!-- Then put toasts within -->
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="myToast">
+            <div class="toast-header">
+                <img src="../static/img/tips.png" style="height: 15px;width: 15px" class="rounded me-2" alt="">
+                <strong class="me-auto">更新消息</strong>
+                <small class="text-muted">刚刚</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="Toast-updata">
+
+            </div>
+        </div>
+    </div>
+</div>
 <div class="container">
+
     <table class="table">
         <thead>
         <tr>
@@ -22,6 +48,9 @@
         </tr>
         </thead>
         <tbody>
+        <script>
+            const results = {{ results | tojson }};
+        </script>
         {% for item in results %}
             <tr>
                 <th scope="row">{{ item.pid }}</th>
@@ -31,11 +60,214 @@
                     {% elif item.difficulty == '中等' %}class="text-warning fw-bold"
                     {% elif item.difficulty == '困难' %}class="text-danger fw-bold"
                     {% else %}class=""{% endif %}>{{ item.difficulty }}</td>
-                <td><a class="btn btn-primary" href="/problem_detail/{{ item.pid }}" role="button">编辑</a></td>
+                <td>
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#problemContent" data-item="{{ item.pid }}">
+                        编辑
+                    </button>
+
+                </td>
+                <!-- Modal -->
+                <div class="modal fade" id="problemContent" tabindex="-1" aria-labelledby="problemCcontentLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="problemContentLabel">Modal title</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div id="modalBody" class="modal-body">
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">题名</span>
+                                    <input type="text" class="form-control" aria-label="Sizing example input"
+                                           aria-describedby="inputGroup-sizing-default" id="title">
+                                </div>
+                                <p style="display: none" id="pid"></p>
+                                {#                                <p id="content">{{ item.content }}</p>#}
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">题目描述</span>
+                                    <textarea style="height: 350px" class="form-control" aria-label="With textarea"
+                                              id="content"></textarea>
+                                </div>
+                                {#                                <p id="difficulty">{{ item.difficulty }}</p>#}
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">难度</span>
+                                    <input type="text" class="form-control" aria-label="Sizing example input"
+                                           aria-describedby="inputGroup-sizing-default" id="difficulty">
+                                </div>
+                                <div id="tips">
+                                    <div class="card card-footer mb-3">提醒</div>
+                                    <button type="button" class="btn btn-primary mb-3" id="add-tips-btn">新增提醒</button>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭编辑
+                                </button>
+                                <button type="button" class="btn btn-primary" id="update-problem">保存修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+    $(document).ready(function () {
+        let count = 1
+        $('.btn-primary[data-bs-target="#problemContent"]').click(function () {
+            const itemId = $(this).data('item');
+            // 根据 itemId 查找对应的数据
+            const item = results.find(i => i.pid === itemId);
+
+            // 更新模态框里的内容
+            $('#pid').text(item.pid)
+            $('#problemContentLabel').text(item.title)
+            $('#title').val(item.title);
+            $('#content').text(item.content);
+            $('#difficulty').val(item.difficulty)
+            {#$('#title').attr('placeholder', item.title)#}
+            {#$('#tips').text(item.tips);#}
+            let tips;
+
+            if (item.tips) {
+                try {
+                    tips = JSON.parse(item.tips);
+                } catch (error) {
+                    console.error("解析 item.tips 失败:", error);
+                    // 处理解析失败的情况
+                }
+            } else {
+                // 处理 tips 为空的情况
+                item.tips = ""
+            }
+            // 检查元素是否存在
+            let tipsDivs = document.querySelectorAll('[id^="tips-div"]');
+            if (tipsDivs.length > 0) {
+                tipsDivs.forEach(function (tipsDiv) {
+                    tipsDiv.remove();
+                });
+                count = 1;
+            }
+            // 创建一个新的div元素
+
+            let div = document.createElement('div');
+            div.classList.add('input-group', 'mb-3');  // 添加class
+            div.setAttribute('id', 'tips-div');
+
+            // 遍历tips对象的键值对
+            for (let key in tips) {
+                if (tips.hasOwnProperty(key)) {
+                    let value = tips[key];
+                    // 创建一个新的div元素
+                    let tipDiv = createTipElement(value)
+                    // 将div元素添加到父div元素中
+                    div.appendChild(tipDiv);
+                }
+                count += 1
+            }
+
+            // 将div元素添加到页面中的指定位置（假设id为'tips'的元素）
+            let tipsElement = document.getElementById('tips');
+            tipsElement.appendChild(div);
+        });
+
+        function createTipElement(value) {
+            let tipDiv = document.createElement('div');
+            tipDiv.classList.add('mb-3');
+            tipDiv.classList.add('input-group-text');
+
+            let span = document.createElement('span');
+            span.innerHTML = count.toString() + ':&nbsp;';
+
+            let input = document.createElement('input');
+            input.classList.add('form-control');
+            input.setAttribute('type', 'text');
+            input.setAttribute('aria-label', 'Sizing example input');
+            input.setAttribute('aria-describedby', 'inputGroup-sizing-default');
+            input.setAttribute('id', 'tips' + count.toString());
+            input.value = value;
+
+            let deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '删除';
+            deleteBtn.classList.add('btn', 'btn-danger');
+            deleteBtn.setAttribute('id', 'delete-btn');
+
+            deleteBtn.addEventListener('click', function () {
+                tipDiv.remove();
+                count -= 1;
+            });
+
+            tipDiv.appendChild(span);
+            tipDiv.appendChild(input);
+            tipDiv.appendChild(deleteBtn);
+            return tipDiv;
+        };
+
+        $('#add-tips-btn').click(function () {
+            let tipDiv = createTipElement('')
+            // 创建一个新的div元素
+            let div = document.getElementById('tips-div')
+            div.appendChild(tipDiv);
+            count += 1;
+        });
+
+        $('#update-problem').click(function () {
+            // 创建要发送的数据对象
+            let pid = $('#pid').text()
+            // 找到以 "tips" 开头的输入框
+            let tipsList = $('input[id^="tips"]');
+            let tipsData = {};
+            // 遍历找到的输入框
+            tipsList.each(function (index) {
+                let key = index + 1;
+                let value = $(this).val();
+                tipsData[key] = value;
+            });
+            let data = {
+                // 添加你想要发送的数据属性
+                // 例如：key: value
+                'pid': pid,
+                'title': $('#title').val(),
+                'content': $('#content').val(),
+                'tips': tipsData,
+                'difficulty': $('#difficulty').val()
+            };
+
+            $.ajax({
+                url: '/update_problem/' + pid, // 替换为你的 API 端点 URL
+                method: 'POST', // 替换为你想要使用的 HTTP 方法
+                data: JSON.stringify(data),
+                contentType: 'application/json', // 指定发送的数据类型为 JSON
+                success: function (response) {
+                    // 请求成功的处理代码
+                    console.log('请求成功');
+                    console.log(response);
+                    let toast = $('#myToast')
+                    if (response.success) {
+                        $('#Toast-updata').text('更新成功');
+                        toast.addClass('text-bg-primary')
+                    } else {
+                        $('#Toast-updata').text('更新失败');
+                        toast.addClass('text-bg-danger')
+                    }
+                    $('#problemContent').modal('hide');
+                    toast.toast('show');
+                },
+                error: function (xhr, status, error) {
+                    // 请求失败的处理代码
+                    console.log('请求失败');
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

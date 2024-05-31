@@ -1,3 +1,6 @@
+import datetime
+from dataclasses import asdict
+
 from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -11,9 +14,11 @@ PORT = 3306
 USERNAME = 'root'
 PASSWORD = 'qazplm820252'
 DATABASE = 'OJ'
-app.config['SQLALCHEMY_DATABASE_URI']=f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOSTNAME}:{PORT}/{DATABASE}?charset=utf8"
+app.config[
+    'SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOSTNAME}:{PORT}/{DATABASE}?charset=utf8"
 app.secret_key = 'xihwidfw9efw'
 db = SQLAlchemy(app)
+
 
 @app.route('/')
 def index():  # put application's code here
@@ -22,9 +27,11 @@ def index():  # put application's code here
     db.session.close()  #
     return render_template('index.html', results=result)
 
+
 @app.route('/reg')
 def reg():
     return render_template('reg.html')
+
 
 @app.route('/user_reg', methods=['GET', 'POST'])
 def user_reg():
@@ -34,9 +41,11 @@ def user_reg():
     db.session.commit()
     return redirect('/')
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     return render_template('login.html')
+
 
 @app.route('/user_login', methods=['GET', 'POST'])
 def user_login():
@@ -50,6 +59,7 @@ def user_login():
     else:
         session['username'] = username
         return render_template('index.html')
+
 
 @app.route('/problem_detail/<int:pid>', methods=['GET', 'POST'])
 def problem_detail(pid):
@@ -66,7 +76,7 @@ def submit_problem(pid):
     # 获取客户端提交的表单数据
     form_data = request.form.to_dict()
     # print(form_data)
-    response = requests.post(f'http://127.0.0.1:9900/problems/{pid}/judge', data=json.dumps(form_data),
+    response = requests.post(f'http://127.0.0.1:8000/problems/{pid}/judge', data=json.dumps(form_data),
                              headers={'Content-Type': 'application/json'})
 
     if response.status_code == 200:
@@ -77,18 +87,43 @@ def submit_problem(pid):
         # 返回错误信息
         return jsonify({'error': 'Failed to send data to other API'}), 500
 
+
 @app.route('/problem_manage', methods=['GET', 'POST'])
 def problem_manage():
     res = db.session.execute(text('select * from problem'))
-    result = res.fetchall()
-    print(result)
+    # for item in res:
+    #     print(item)
+    results = [dict(row_proxy._mapping) for row_proxy in res]
+    # json_data = jsonify(results)
+
     if request.method == 'POST':
         pass
-    return render_template('problem_manage.html', results=result)
+    return render_template('problem_manage.html', results=results)
+
 
 @app.route('/testcase_manage', methods=['GET', 'POST'])
 def testcase_manage():
     return "用例管理页面"
+
+
+@app.route('/update_problem/<int:pid>', methods=['POST'])
+def update_problem(pid):
+    data = request.json
+    try:
+        res = db.session.execute(text('''
+            UPDATE problem
+            SET title = :title, content = :content, tips = :tips, difficulty = :difficulty
+            WHERE pid = :pid
+        '''), {'title': data['title'], 'content': data['content'], 'tips': json.dumps(data['tips']),
+               'difficulty': data['difficulty'], 'pid': data['pid']})
+
+        db.session.commit()  # 提交事务
+
+        return jsonify({'success': True, 'message': '更新成功!'})
+    except Exception as e:
+        db.session.rollback()  # 回滚事务
+        return jsonify({'success': False, 'message': str(e)})
+
 
 if __name__ == '__main__':
     app.run(port=8899)

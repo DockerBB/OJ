@@ -206,4 +206,4 @@ def run_java_test(code, test_input, test_output):
         os.remove(input_file_path)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=9900)
