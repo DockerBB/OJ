@@ -36,7 +36,49 @@
     </div>
 </div>
 <div class="container">
-
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProblemContent">新增题目
+        </button>
+        <!-- modal -->
+        <div class="modal fade" id="newProblemContent" tabindex="-1" aria-labelledby="newProblemContentLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="newProblemContentLabel">题目新增</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div id="modalBody" class="modal-body">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">题名</span>
+                            <input type="text" class="form-control" aria-label="Sizing example input"
+                                   aria-describedby="inputGroup-sizing-default" id="newTitle">
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">题目描述</span>
+                            <textarea style="height: 350px" class="form-control" aria-label="With textarea"
+                                      id="newContent"></textarea>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">难度</span>
+                            <input type="text" class="form-control" aria-label="Sizing example input"
+                                   aria-describedby="inputGroup-sizing-default" id="newDifficulty">
+                        </div>
+                        <div id="newTips">
+                            <div class="card card-footer mb-3">提醒</div>
+                            <button type="button" class="btn btn-primary mb-3" id="new-add-tips-btn">新增提醒</button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭编辑
+                        </button>
+                        <button type="button" class="btn btn-primary" id="newProblem">新增题目</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <table class="table">
         <thead>
         <tr>
@@ -44,7 +86,7 @@
             <th scope="col">题目</th>
             <th scope="col">通过率</th>
             <th scope="col">难度</th>
-            <th scope="col"></th>
+            <th scope="col">操作</th>
         </tr>
         </thead>
         <tbody>
@@ -66,7 +108,9 @@
                             data-bs-target="#problemContent" data-item="{{ item.pid }}">
                         编辑
                     </button>
-
+                    <button type="button" class="btn btn-danger delete-problem-btn" data-pid="{{ item.pid }}">
+                        删除
+                    </button>
                 </td>
                 <!-- Modal -->
                 <div class="modal fade" id="problemContent" tabindex="-1" aria-labelledby="problemCcontentLabel"
@@ -164,7 +208,7 @@
                 if (tips.hasOwnProperty(key)) {
                     let value = tips[key];
                     // 创建一个新的div元素
-                    let tipDiv = createTipElement(value)
+                    let tipDiv = createTipElement(value, 'tips')
                     // 将div元素添加到父div元素中
                     div.appendChild(tipDiv);
                 }
@@ -176,7 +220,7 @@
             tipsElement.appendChild(div);
         });
 
-        function createTipElement(value) {
+        function createTipElement(value, info) {
             let tipDiv = document.createElement('div');
             tipDiv.classList.add('mb-3');
             tipDiv.classList.add('input-group-text');
@@ -189,7 +233,7 @@
             input.setAttribute('type', 'text');
             input.setAttribute('aria-label', 'Sizing example input');
             input.setAttribute('aria-describedby', 'inputGroup-sizing-default');
-            input.setAttribute('id', 'tips' + count.toString());
+            input.setAttribute('id', info + count.toString());
             input.value = value;
 
             let deleteBtn = document.createElement('button');
@@ -209,7 +253,7 @@
         };
 
         $('#add-tips-btn').click(function () {
-            let tipDiv = createTipElement('')
+            let tipDiv = createTipElement('', 'tips')
             // 创建一个新的div元素
             let div = document.getElementById('tips-div')
             div.appendChild(tipDiv);
@@ -256,6 +300,124 @@
                         toast.addClass('text-bg-danger')
                     }
                     $('#problemContent').modal('hide');
+                    toast.toast('show');
+                },
+                error: function (xhr, status, error) {
+                    // 请求失败的处理代码
+                    console.log('请求失败');
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                }
+            });
+        });
+        $('#new-add-tips-btn').click(function () {
+            let tipDiv = createTipElement('', 'new-tips')
+            // 创建一个新的div元素
+            let div = document.getElementById('new-tips-div')
+            div.appendChild(tipDiv);
+            count += 1;
+        });
+
+        $('.btn-primary[data-bs-target="#newProblemContent"]').click(function () {
+            // 检查元素是否存在
+            let tipsDivs = document.querySelectorAll('[id^="new-tips-div"]');
+            if (tipsDivs.length > 0) {
+                tipsDivs.forEach(function (tipsDiv) {
+                    tipsDiv.remove();
+                });
+                count = 1;
+            }
+            // 创建一个新的div元素
+            let div = document.createElement('div');
+            div.classList.add('input-group', 'mb-3');  // 添加class
+            div.setAttribute('id', 'new-tips-div');
+
+
+            // 将div元素添加到页面中的指定位置（假设id为'tips'的元素）
+            let tipsElement = document.getElementById('newTips');
+            tipsElement.appendChild(div);
+        });
+        $('#newProblem').click(function () {
+            // 创建要发送的数据对象
+            // 找到以 "tips" 开头的输入框
+            let tipsList = $('input[id^="new-tips"]');
+            let tipsData = {};
+            // 遍历找到的输入框
+            tipsList.each(function (index) {
+                let key = index + 1;
+                let value = $(this).val();
+                tipsData[key] = value;
+            });
+            let data = {
+                // 添加你想要发送的数据属性
+                // 例如：key: value
+                'title': $('#newTitle').val(),
+                'content': $('#newContent').val(),
+                'tips': tipsData,
+                'difficulty': $('#newDifficulty').val()
+            };
+
+            $.ajax({
+                url: '/add_problem', // 替换为你的 API 端点 URL
+                method: 'POST', // 替换为你想要使用的 HTTP 方法
+                data: JSON.stringify(data),
+                contentType: 'application/json', // 指定发送的数据类型为 JSON
+                success: function (response) {
+                    // 请求成功的处理代码
+                    console.log('请求成功');
+                    console.log(response);
+                    let toast = $('#myToast')
+                    if (response.success) {
+                        $('#Toast-updata').text('插入成功');
+                        toast.addClass('text-bg-primary');
+                        // 在需要等待的地方调用以下代码
+                        setTimeout(function () {
+                            // 在这里执行等待后的操作
+                            location.reload();
+                        }, 2000); // 1500毫秒等于1.5秒
+
+                    } else {
+                        $('#Toast-updata').text('插入失败');
+                        toast.addClass('text-bg-danger')
+                    }
+                    $('#newProblemContent').modal('hide');
+                    toast.toast('show');
+                },
+                error: function (xhr, status, error) {
+                    // 请求失败的处理代码
+                    console.log('请求失败');
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                }
+            });
+        });
+        $('.delete-problem-btn').on('click', function () {
+            let pid = $(this).data('pid');
+            console.log(pid)
+            $.ajax({
+                url: '/delete_problem/' + pid, // 替换为你的 API 端点 URL
+                method: 'GET', // 替换为你想要使用的 HTTP 方法
+                {#data: JSON.stringify(data),#}
+                {#contentType: 'application/json', // 指定发送的数据类型为 JSON#}
+                success: function (response) {
+                    // 请求成功的处理代码
+                    console.log('请求成功');
+                    console.log(response);
+                    let toast = $('#myToast')
+                    if (response.success) {
+                        $('#Toast-updata').text('删除成功');
+                        toast.addClass('text-bg-primary')
+                        // 在需要等待的地方调用以下代码
+                        setTimeout(function () {
+                            // 在这里执行等待后的操作
+                            location.reload();
+                        }, 2000); // 1500毫秒等于1.5秒
+                    } else {
+                        $('#Toast-updata').text('删除失败');
+                        toast.addClass('text-bg-danger')
+                    }
                     toast.toast('show');
                 },
                 error: function (xhr, status, error) {

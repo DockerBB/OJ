@@ -125,5 +125,38 @@ def update_problem(pid):
         return jsonify({'success': False, 'message': str(e)})
 
 
+@app.route('/add_problem', methods=['POST'])
+def add_problem():
+    data = request.json
+    try:
+        res = db.session.execute(text('''
+            insert into problem(title, content, tips, difficulty)
+            values(:title, :content, :tips, :difficulty)
+        '''), {'title': data['title'], 'content': data['content'], 'tips': json.dumps(data['tips']),
+               'difficulty': data['difficulty']})
+
+        db.session.commit()  # 提交事务
+
+        return jsonify({'success': True, 'message': '插入成功!'})
+    except Exception as e:
+        db.session.rollback()  # 回滚事务
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@app.route('/delete_problem/<int:pid>', methods=['GET'])
+def delete_problem(pid):
+    try:
+        res = db.session.execute(text('''
+            delete from problem
+            where pid = :pid
+        '''), {'pid': pid})
+
+        db.session.commit()  # 提交事务
+
+        return jsonify({'success': True, 'message': '删除成功!'})
+    except Exception as e:
+        db.session.rollback()  # 回滚事务
+        return jsonify({'success': False, 'message': str(e)})
+
 if __name__ == '__main__':
     app.run(port=8899)
